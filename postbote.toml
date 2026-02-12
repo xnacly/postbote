@@ -1,0 +1,24 @@
+# default configuration
+editor = "nvim"
+
+# mail server configuration
+[account.proton]
+imap_server = "127.0.0.1"
+imap_port = 1143
+imap_user = "bridge-username"
+imap_pass = "bridge-password"
+smtp_server = "127.0.0.1"
+smtp_port = 1025
+smtp_user = "bridge-username"
+smtp_pass = "bridge-password"
+
+# author info
+[account.proton.author]
+name = "Your Name"
+email = "you@protonmail.com"
+
+
+# execute commands when an attachment with a matching mime type is opened
+[MIME]
+"application/pdf" = "zathura --fork {{file.path}}"
+"text/plain"      = "nvim -R {{file.path}}"
