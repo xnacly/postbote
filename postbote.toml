@@ -1,4 +1,7 @@
-# default configuration
+# Configuration file for postbote, this shows
+# all possible fields and options
+
+# for bulk edits, composing mail and other shenanigans
 editor = "nvim"
 
 # mail server configuration
@@ -17,8 +20,8 @@ smtp_pass = "bridge-password"
 name = "Your Name"
 email = "you@protonmail.com"
 
-
-# execute commands when an attachment with a matching mime type is opened
+# execute commands when an attachment with a matching mime type is opened via
+# <id>gf
 [MIME]
 "application/pdf" = "zathura --fork {{file.path}}"
 "text/plain"      = "nvim -R {{file.path}}"
