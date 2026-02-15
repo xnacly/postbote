@@ -38,13 +38,15 @@ var validCommandList = []string{
 	"a",
 }
 var validCommands = map[string]struct{}{}
-var validFirstRunes = map[rune]struct{}{}
+var validRunes = map[rune]struct{}{}
 var validPrefixes = map[string]struct{}{}
 
 func init() {
 	for _, cmd := range validCommandList {
 		validCommands[cmd] = struct{}{}
-		validFirstRunes[rune(cmd[0])] = struct{}{}
+		for _, r := range cmd {
+			validRunes[r] = struct{}{}
+		}
 		// this is currently the best way i can think of, besides a trie, which
 		// i dont think is necessary for a whole 11 commands
 		for i := 1; i <= len(cmd); i++ {
@@ -98,7 +100,7 @@ func (v *vi) update(msg tea.KeyMsg) (viMessage, bool) {
 		case k >= '0' && k <= '9' && v.command.Len() == 0:
 			v.modifier = v.modifier*10 + uint(k-'0')
 		default:
-			if _, ok := validFirstRunes[k]; ok {
+			if _, ok := validRunes[k]; ok {
 				v.command.WriteRune(k)
 				cmd := v.command.String()
 				if _, ok := validCommands[cmd]; ok {
