@@ -2,33 +2,65 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// `<modifier><operator>` enables behaviour like 25j for moving 25 mails down
-// or 2gf for going to the second attachemnt
+// Vi style motion emulation.
+//
+//	count command
+//
+// Where
+//
+//	count := \d*
+//	command := [hjklgGqfx]+
+//
+// Enables behaviour like 25j for moving 25 mails down, 2gf for going to the
+// second attachment and gx for opening an url or file path via the operating
+// systems open behaviour
 type vi struct {
 	modifier uint
-	operator rune
+	command  strings.Builder
 }
 
-// represent an vi like modal operation
+var validCommands = map[string]struct{}{
+	"h":  {},
+	"j":  {},
+	"k":  {},
+	"l":  {},
+	"G":  {},
+	"gg": {},
+	"gf": {},
+	"gx": {},
+	"q":  {},
+}
+
+func isPrefix(s string) bool {
+	for cmd := range validCommands {
+		if strings.HasPrefix(cmd, s) {
+			return true
+		}
+	}
+	return false
+}
+
+// represent a fully detected vi motion
 type viMessage struct {
 	modifier uint
-	operator rune
+	command  string
 }
 
 func (v *vi) reset() {
 	v.modifier = 0
-	v.operator = 0
+	v.command.Reset()
 }
 
 func (v *vi) pending() string {
 	if v.modifier == 0 || v.modifier == 1 {
-		return fmt.Sprint(string(v.operator))
+		return fmt.Sprint(v.command.String())
 	} else {
-		return fmt.Sprint(v.modifier, string(v.operator))
+		return fmt.Sprint(v.modifier, v.command.String())
 	}
 }
 
@@ -39,7 +71,7 @@ func (v *vi) toViMessage() viMessage {
 	}
 	msg := viMessage{
 		modifier: v.modifier,
-		operator: v.operator,
+		command:  v.command.String(),
 	}
 	return msg
 }
@@ -47,6 +79,8 @@ func (v *vi) toViMessage() viMessage {
 // update the vi state
 func (v *vi) update(msg tea.KeyMsg) (viMessage, bool) {
 	switch msg.Type {
+	case tea.KeyEsc:
+		v.reset()
 	case tea.KeyRunes:
 		if len(msg.Runes) != 1 {
 			return viMessage{}, false
@@ -55,14 +89,22 @@ func (v *vi) update(msg tea.KeyMsg) (viMessage, bool) {
 		switch {
 		case k >= '0' && k <= '9':
 			v.modifier = v.modifier*10 + uint(k-'0')
-		case k == 'k',
-			k == 'j',
-			k == 'h',
-			k == 'l',
-			k == 'G',
-			k == 'q':
-			v.operator = k
-			return v.toViMessage(), true
+		default:
+			switch k {
+			case 'k', 'j', 'h', 'l', 'G', 'q', 'f', 'g', 'x':
+				v.command.WriteRune(k)
+
+				cmd := v.command.String()
+				if _, ok := validCommands[cmd]; ok {
+					vimsg := v.toViMessage()
+					v.reset()
+					return vimsg, true
+				}
+
+				if !isPrefix(cmd) {
+					v.reset()
+				}
+			}
 		}
 	}
 

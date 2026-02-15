@@ -31,9 +31,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch typed := msg.(type) {
 	case tea.KeyMsg:
 		if msg, some := m.state.vi.update(typed); some {
-			m.state.vi.reset()
-			switch msg.operator {
-			case 'q':
+			switch msg.command {
+			case "q":
 				return m, tea.Quit
 			}
 		}
