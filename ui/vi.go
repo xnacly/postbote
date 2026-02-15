@@ -24,25 +24,33 @@ type vi struct {
 	command  strings.Builder
 }
 
-var validCommands = map[string]struct{}{
-	"h":  {},
-	"j":  {},
-	"k":  {},
-	"l":  {},
-	"G":  {},
-	"gg": {},
-	"gf": {},
-	"gx": {},
-	"q":  {},
+var validCommandList = []string{
+	"h",
+	"j",
+	"k",
+	"l",
+	"G",
+	"gg",
+	"gf",
+	"gx",
+	"q",
+	"/",
+	"a",
 }
+var validCommands = map[string]struct{}{}
+var validFirstRunes = map[rune]struct{}{}
+var validPrefixes = map[string]struct{}{}
 
-func isPrefix(s string) bool {
-	for cmd := range validCommands {
-		if strings.HasPrefix(cmd, s) {
-			return true
+func init() {
+	for _, cmd := range validCommandList {
+		validCommands[cmd] = struct{}{}
+		validFirstRunes[rune(cmd[0])] = struct{}{}
+		// this is currently the best way i can think of, besides a trie, which
+		// i dont think is necessary for a whole 11 commands
+		for i := 1; i <= len(cmd); i++ {
+			validPrefixes[cmd[:i]] = struct{}{}
 		}
 	}
-	return false
 }
 
 // represent a fully detected vi motion
@@ -87,13 +95,11 @@ func (v *vi) update(msg tea.KeyMsg) (viMessage, bool) {
 		}
 		k := msg.Runes[0]
 		switch {
-		case k >= '0' && k <= '9':
+		case k >= '0' && k <= '9' && v.command.Len() == 0:
 			v.modifier = v.modifier*10 + uint(k-'0')
 		default:
-			switch k {
-			case 'k', 'j', 'h', 'l', 'G', 'q', 'f', 'g', 'x':
+			if _, ok := validFirstRunes[k]; ok {
 				v.command.WriteRune(k)
-
 				cmd := v.command.String()
 				if _, ok := validCommands[cmd]; ok {
 					vimsg := v.toViMessage()
@@ -101,7 +107,7 @@ func (v *vi) update(msg tea.KeyMsg) (viMessage, bool) {
 					return vimsg, true
 				}
 
-				if !isPrefix(cmd) {
+				if _, ok := validPrefixes[cmd]; !ok {
 					v.reset()
 				}
 			}
