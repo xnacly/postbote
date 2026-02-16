@@ -6,6 +6,7 @@ type Folder struct {
 	Name     string
 	Path     string
 	Messages []Message
+	Folders  []Folder
 }
 
 type Message struct {
@@ -22,4 +23,7 @@ type Attachment struct {
 	Name     string
 	MimeType string
 	Size     int64
+
+	// only available once its downloaded
+	Path string
 }

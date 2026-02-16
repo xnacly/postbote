@@ -61,24 +61,25 @@ type viMessage struct {
 	command  string
 }
 
+func (msg viMessage) String() string {
+	if msg.modifier == 0 || msg.modifier == 1 {
+		return fmt.Sprint(msg.command)
+	} else {
+		return fmt.Sprint(msg.modifier, msg.command)
+	}
+}
+
 func (v *vi) reset() {
 	v.modifier = 0
 	v.command.Reset()
 }
 
 func (v *vi) pending() string {
-	if v.modifier == 0 || v.modifier == 1 {
-		return fmt.Sprint(v.command.String())
-	} else {
-		return fmt.Sprint(v.modifier, v.command.String())
-	}
+	return v.toViMessage().String()
 }
 
 // convert the current vi state into a viMessage model.Update can deal with
 func (v *vi) toViMessage() viMessage {
-	if v.modifier < 1 {
-		v.modifier = 1
-	}
 	msg := viMessage{
 		modifier: v.modifier,
 		command:  v.command.String(),
