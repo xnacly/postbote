@@ -96,7 +96,7 @@ func (m model) status(width int) string {
 	viPending := m.vi.pending()
 
 	left = lipgloss.NewStyle().
-		Width(width - len(viPending) - 4).
+		Width(width - lipgloss.Width(viPending) - 4).
 		Align(lipgloss.Left).
 		Render(left)
 
